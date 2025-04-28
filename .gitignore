@@ -178,3 +178,5 @@ cython_debug/
 /kafka_data
 
 /kafka_backup_data
+
+/connect-plugins

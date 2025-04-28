@@ -1,6 +1,6 @@
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.1
+    image: confluentinc/cp-zookeeper:7.3.0
     hostname: zookeeper
     container_name: zookeeper
     ports:
@@ -13,20 +13,20 @@ services:
 
   # Основной Kafka-кластер (3 брокера)
   kafka1:
-    image: confluentinc/cp-kafka:7.0.1
+    image: confluentinc/cp-kafka:7.3.0
     hostname: kafka1
     container_name: kafka1
     depends_on:
       - zookeeper
     ports:
       - '9092:9092'
-      - '9093:9093' # SSL порт
+      - '29093:9093' # Changed port to avoid conflict
       - '9999:9999' # JMX
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,SSL://kafka1:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,SSL://kafka1:29093
       KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
       KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
       KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
@@ -49,20 +49,20 @@ services:
       - kafka-network
 
   kafka2:
-    image: confluentinc/cp-kafka:7.0.1
+    image: confluentinc/cp-kafka:7.3.0
     hostname: kafka2
     container_name: kafka2
     depends_on:
       - zookeeper
     ports:
       - '9094:9094'
-      - '9095:9095' # SSL порт
+      - '29095:9095' # Changed port to avoid conflict
       - '10000:9999' # JMX
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,SSL://kafka2:9095
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,SSL://kafka2:29095
       KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
       KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
       KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
@@ -80,20 +80,20 @@ services:
       - kafka-network
 
   kafka3:
-    image: confluentinc/cp-kafka:7.0.1
+    image: confluentinc/cp-kafka:7.3.0
     hostname: kafka3
     container_name: kafka3
     depends_on:
       - zookeeper
     ports:
       - '9096:9096'
-      - '9097:9097' # SSL порт
+      - '29097:9097' # Changed port to avoid conflict
       - '10001:9999' # JMX
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29094,SSL://kafka3:9097
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29094,SSL://kafka3:29097
       KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
       KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
       KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
@@ -112,19 +112,19 @@ services:
 
   # Второй кластер Kafka для дублирования данных
   kafka-backup1:
-    image: confluentinc/cp-kafka:7.0.1
+    image: confluentinc/cp-kafka:7.3.0
     hostname: kafka-backup1
     container_name: kafka-backup1
     depends_on:
       - zookeeper
     ports:
       - '9098:9098'
-      - '9099:9099' # SSL порт
+      - '29099:9099' # Changed port to avoid conflict
     environment:
       KAFKA_BROKER_ID: 4
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-backup1:29095,SSL://kafka-backup1:9099
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-backup1:29095,SSL://kafka-backup1:29099
       KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
       KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
       KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
@@ -142,7 +142,7 @@ services:
 
   # Утилита для управления Kafka
   kafka-tools:
-    image: confluentinc/cp-kafka:7.0.1
+    image: confluentinc/cp-kafka:7.3.0
     container_name: kafka-tools
     depends_on:
       - kafka1
@@ -189,7 +189,7 @@ services:
 
   # Spark
   spark-master:
-    image: bde2020/spark-master:3.1.1-hadoop3.2
+    image: bitnami/spark:3.3.2
     container_name: spark-master
     ports:
       - '8080:8080'
@@ -200,7 +200,7 @@ services:
       - kafka-network
 
   spark-worker:
-    image: bde2020/spark-worker:3.1.1-hadoop3.2
+    image: bitnami/spark:3.3.2
     container_name: spark-worker
     depends_on:
       - spark-master
@@ -247,7 +247,7 @@ services:
 
   # Kafka Connect с Elasticsearch Connector
   kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.0.1
+    image: confluentinc/cp-kafka-connect:7.3.0
     container_name: kafka-connect
     depends_on:
       - kafka1
