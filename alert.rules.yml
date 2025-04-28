@@ -1,0 +1,29 @@
+groups:
+  - name: kafka-alerts
+    rules:
+      - alert: KafkaBrokerDown
+        expr: up{job="kafka-brokers"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Kafka broker down (instance {{ $labels.instance }})'
+          description: 'Kafka broker {{ $labels.instance }} is down for more than 1 minute.'
+
+      - alert: UnderReplicatedPartitions
+        expr: kafka_server_ReplicaManager_UnderReplicatedPartitions > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Under-replicated partitions (instance {{ $labels.instance }})'
+          description: 'Kafka broker {{ $labels.instance }} has {{ $value }} under-replicated partitions.'
+
+      - alert: OfflinePartitions
+        expr: kafka_controller_KafkaController_OfflinePartitionsCount > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Offline partitions (instance {{ $labels.instance }})'
+          description: 'Kafka cluster has {{ $value }} offline partitions.'

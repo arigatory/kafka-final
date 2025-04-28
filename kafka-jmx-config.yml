@@ -1,0 +1,18 @@
+---
+startDelaySeconds: 0
+ssl: false
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+rules:
+- pattern: kafka.<name=(\w+)><>(Count|Value|Mean|OneMinuteRate|FiveMinuteRate|FifteenMinuteRate|Percentile\d*|StdDev|Min|Max)
+  name: kafka_$1_$2
+  type: GAUGE
+- pattern: kafka.server<type=(\w+), name=(\w+)><>Value
+  name: kafka_server_$1_$2
+  type: GAUGE
+- pattern: kafka.server<type=(\w+), name=(\w+), (\w+)=(\w+)><>Value
+  name: kafka_server_$1_$2_$3_$4
+  type: GAUGE
+- pattern: kafka.controller<type=(\w+), name=(\w+)><>Value
+  name: kafka_controller_$1_$2
+  type: GAUGE

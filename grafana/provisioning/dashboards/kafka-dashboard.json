@@ -1,0 +1,48 @@
+{
+  "title": "Kafka Monitoring",
+  "panels": [
+    {
+      "title": "Kafka Brokers Status",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"kafka-brokers\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+    {
+      "title": "Under Replicated Partitions",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "kafka_server_ReplicaManager_UnderReplicatedPartitions",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+    {
+      "title": "Active Controller Count",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "kafka_controller_KafkaController_ActiveControllerCount"
+        }
+      ]
+    },
+    {
+      "title": "Bytes In/Out",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(kafka_server_BrokerTopicStats_BytesInPerSec[1m])",
+          "legendFormat": "Bytes In {{topic}}"
+        },
+        {
+          "expr": "rate(kafka_server_BrokerTopicStats_BytesOutPerSec[1m])",
+          "legendFormat": "Bytes Out {{topic}}"
+        }
+      ]
+    }
+  ]
+}

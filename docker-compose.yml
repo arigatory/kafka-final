@@ -1,0 +1,357 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - '2181:2181'
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - kafka-network
+
+  # Основной Kafka-кластер (3 брокера)
+  kafka1:
+    image: confluentinc/cp-kafka:7.0.1
+    hostname: kafka1
+    container_name: kafka1
+    depends_on:
+      - zookeeper
+    ports:
+      - '9092:9092'
+      - '9093:9093' # SSL порт
+      - '9999:9999' # JMX
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,SSL://kafka1:9093
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.server.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: truststore_creds
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: 'false'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka1
+    volumes:
+      - ./kafka_ssl:/etc/kafka/secrets
+      - ./kafka_data/kafka1:/var/lib/kafka/data
+    networks:
+      - kafka-network
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.0.1
+    hostname: kafka2
+    container_name: kafka2
+    depends_on:
+      - zookeeper
+    ports:
+      - '9094:9094'
+      - '9095:9095' # SSL порт
+      - '10000:9999' # JMX
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,SSL://kafka2:9095
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.server.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: truststore_creds
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: 'false'
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka2
+    volumes:
+      - ./kafka_ssl:/etc/kafka/secrets
+      - ./kafka_data/kafka2:/var/lib/kafka/data
+    networks:
+      - kafka-network
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.0.1
+    hostname: kafka3
+    container_name: kafka3
+    depends_on:
+      - zookeeper
+    ports:
+      - '9096:9096'
+      - '9097:9097' # SSL порт
+      - '10001:9999' # JMX
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29094,SSL://kafka3:9097
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.server.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: truststore_creds
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: 'false'
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka3
+    volumes:
+      - ./kafka_ssl:/etc/kafka/secrets
+      - ./kafka_data/kafka3:/var/lib/kafka/data
+    networks:
+      - kafka-network
+
+  # Второй кластер Kafka для дублирования данных
+  kafka-backup1:
+    image: confluentinc/cp-kafka:7.0.1
+    hostname: kafka-backup1
+    container_name: kafka-backup1
+    depends_on:
+      - zookeeper
+    ports:
+      - '9098:9098'
+      - '9099:9099' # SSL порт
+    environment:
+      KAFKA_BROKER_ID: 4
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-backup1:29095,SSL://kafka-backup1:9099
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.server.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: truststore_creds
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    volumes:
+      - ./kafka_ssl:/etc/kafka/secrets
+      - ./kafka_backup_data/kafka-backup1:/var/lib/kafka/data
+    networks:
+      - kafka-network
+
+  # Утилита для управления Kafka
+  kafka-tools:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: kafka-tools
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    environment:
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.client.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: keystore_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.client.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: truststore_creds
+    volumes:
+      - ./kafka_ssl:/etc/kafka/secrets
+      - ./scripts:/scripts
+    networks:
+      - kafka-network
+    command: 'sleep infinity'
+
+  # Hadoop HDFS
+  hadoop-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-namenode
+    ports:
+      - '9870:9870'
+      - '9000:9000'
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    networks:
+      - kafka-network
+
+  hadoop-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-datanode
+    depends_on:
+      - hadoop-namenode
+    environment:
+      - SERVICE_PRECONDITION=hadoop-namenode:9870
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    networks:
+      - kafka-network
+
+  # Spark
+  spark-master:
+    image: bde2020/spark-master:3.1.1-hadoop3.2
+    container_name: spark-master
+    ports:
+      - '8080:8080'
+      - '7077:7077'
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+    networks:
+      - kafka-network
+
+  spark-worker:
+    image: bde2020/spark-worker:3.1.1-hadoop3.2
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    ports:
+      - '8081:8081'
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    networks:
+      - kafka-network
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true
+      - 'ES_JAVA_OPTS=-Xms1g -Xmx1g'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    networks:
+      - kafka-network
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.1
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - '5601:5601'
+    environment:
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+    networks:
+      - kafka-network
+
+  # Kafka Connect с Elasticsearch Connector
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.0.1
+    container_name: kafka-connect
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - elasticsearch
+    ports:
+      - '8083:8083'
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'kafka1:9093,kafka2:9095,kafka3:9097'
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_KEY_CONVERTER: 'org.apache.kafka.connect.storage.StringConverter'
+      CONNECT_VALUE_CONVERTER: 'org.apache.kafka.connect.json.JsonConverter'
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '3'
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '3'
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '3'
+      CONNECT_PLUGIN_PATH: '/usr/share/java,/usr/share/confluent-hub-components'
+      CONNECT_SECURITY_PROTOCOL: SSL
+      CONNECT_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.client.truststore.jks
+      CONNECT_SSL_TRUSTSTORE_PASSWORD: truststorepass
+      CONNECT_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.client.keystore.jks
+      CONNECT_SSL_KEYSTORE_PASSWORD: keystorepass
+      CONNECT_SSL_KEY_PASSWORD: keypass
+    volumes:
+      - ./kafka_ssl:/etc/kafka/secrets
+      - ./connect-plugins:/usr/share/confluent-hub-components
+    networks:
+      - kafka-network
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing Elasticsearch connector..."
+        confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:14.0.0
+        /etc/confluent/docker/run
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml
+      - ./alertmanager.yml:/etc/prometheus/alertmanager.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - kafka-network
+
+  # Alertmanager
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - '9093:9093'
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - kafka-network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - kafka-network
+
+  jmx-exporter:
+    image: bitnami/jmx-exporter:latest
+    container_name: jmx-exporter
+    ports:
+      - '9110:9110'
+    volumes:
+      - ./kafka-jmx-config.yml:/opt/bitnami/jmx-exporter/config.yml
+    networks:
+      - kafka-network
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
+  elasticsearch_data:
+  connect-plugins:
+  grafana_data:
+
+networks:
+  kafka-network:
+    driver: bridge
