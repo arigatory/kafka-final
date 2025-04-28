@@ -47,11 +47,9 @@ kafka-mirror-maker --consumer.config /etc/kafka/secrets/mm-consumer.properties \
                    --whitelist "products,client_queries,recommendations,filtered_products" \
                    --num.streams 2 &
 
+# для аналитической системы:
+kafka-acls --bootstrap-server kafka1:9093 --command-config /etc/kafka/secrets/client.properties \
+  --add --allow-principal User:spark --operation Read --topic products --group spark-group
 
-
-# Добавьте в setup_kafka.sh ACL для аналитической системы:
-# kafka-acls --bootstrap-server kafka1:9093 --command-config /etc/kafka/secrets/client.properties \
-#   --add --allow-principal User:spark --operation Read --topic products --group spark-group
-
-# kafka-acls --bootstrap-server kafka1:9093 --command-config /etc/kafka/secrets/client.properties \
-#   --add --allow-principal User:spark --operation Write --topic recommendations
+kafka-acls --bootstrap-server kafka1:9093 --command-config /etc/kafka/secrets/client.properties \
+  --add --allow-principal User:spark --operation Write --topic recommendations

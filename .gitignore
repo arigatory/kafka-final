@@ -174,3 +174,7 @@ cython_debug/
 .pypirc
 
 /venv
+
+/kafka_data
+
+/kafka_backup_data
